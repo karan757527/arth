@@ -1,0 +1,38 @@
+- hosts: <host-name>
+  vars:
+  - port: "<port>"
+  
+  tasks:
+  - name: "Add EPEl repo"
+    yum_repository:
+      name: epel
+      description: "EPEL YUM repo"
+      baseurl: https://download.fedoraproject.org/pub/epel/$releasever/$basearch/
+   
+  - name: "Install httpd"
+    package:
+      name: "httpd"
+      state: present
+  
+  - name: "Copying conf file"
+    template:
+      dest: "/etc/httpd/conf.d/myhttpd.conf"
+      src: "<src-file>"
+    notify:
+      - changed
+  - name: "Adding rule for http"
+    firewalld:
+      port: "{{ port }}/tcp"
+      state: enabled
+      permanent: yes
+      immediate: yes
+  - name: "Staring httpd service"
+    service:
+      name: httpd
+      state: started
+  handlers:
+    - name: changed
+      service:
+        name: "httpd"
+        state: restarted
+        enabled: yes
