@@ -1,0 +1,132 @@
+- hosts: all
+  become: true
+  become_user: "root"
+  become_method: "sudo"
+  tasks:
+
+  - name: "Copying JDK software"
+    copy:
+       dest: "/home/ec2-user"
+       src: "/root/jdk-8u171-linux-x64.rpm"
+ 
+  - name:  "Copying Hadoop software"
+    copy:
+       dest: "/home/ec2-user"
+       src: "/root/hadoop-1.2.1-1.x86_64.rpm"
+   
+  - name: "Installing JDK software"
+    command: "rpm -i jdk-8u171-linux-x64.rpm"
+    ignore_errors: yes
+
+  - name: "Installing Hadoop Software"
+    command: "rpm -i hadoop-1.2.1-1.x86_64.rpm --force"
+    ignore_errors: yes
+
+    #Datanode Setup
+
+- hosts: slave
+  become: true
+  become_user: "root"
+  become_method: "sudo"
+  vars_prompt:
+          - name: "data_dir"
+            private: "no"
+            prompt: "Enter Absolute Path of Data Node Directory"
+          - name: "data_ip"
+            prompt: "Enter Name Node IP"
+            private: "no"
+
+  tasks:
+  - name: "Creating Data Node Directory"
+    file:
+        path: "{{ data_dir }}"
+        state: directory
+ 
+  - name: "Configuring hdfs-site.xml"
+    blockinfile:
+        path: /etc/hadoop/hdfs-site.xml
+        insertafter: "<configuration>"
+        block:
+             <property>
+             <name>dfs.data.dir</name>
+             <value>{{ data_dir }}</value>
+             </property>
+
+  - name: "Configuring core-site.xml"
+    blockinfile:
+        path: /etc/hadoop/core-site.xml
+        insertafter: "<configuration>"
+        block:
+             <property>
+             <name>fs.default.name</name>
+             <value>hdfs://{{ data_ip  }}:9001</value>
+             </property>
+
+
+  - name: "Starting Datanode Services"
+    command: hadoop-daemon.sh start datanode
+  
+  - name: "Checking status of Datanode"
+    shell: "jps"
+    register: jps
+  - debug:
+        var: jps
+
+        #Namenode Setup
+ 
+- hosts: master
+  become: true
+  become_user: "root"
+  become_method: "sudo"
+  vars_prompt:
+          - name: "name_dir"
+            private: "no"
+            prompt: "Enter Absolute Path of Name Node Directory"
+          - name: "name_ip"
+            prompt: "Enter Name Node IP"
+            private: "no"
+
+  tasks:
+  - name: "Creating Name Node Directory"
+    file:
+        path: "{{ name_dir }}"
+        state: directory
+
+  - name: "Configuring hdfs-site.xml"
+    blockinfile:
+        path: /etc/hadoop/hdfs-site.xml
+        insertafter: "<configuration>"
+        block:
+             <property>
+             <name>dfs.name.dir</name>
+             <value>{{ name_dir }}</value>
+             </property>
+
+  - name: "Configuring core-site.xml"
+    blockinfile:
+        path: /etc/hadoop/core-site.xml
+        insertafter: "<configuration>"
+        block:
+             <property>
+             <name>fs.default.name</name>
+             <value>hdfs://{{ name_ip }}:9001</value>
+             </property>
+
+  - name: "Formatting namenode"
+    shell: "echo Y | hadoop namenode -format"
+    register: format
+
+  - name: "Starting namenode Services"
+    command: hadoop-daemon.sh start namenode
+
+  - name: "Checking status of namenode"
+    shell: "jps"
+    register: jps
+  - debug:
+        var: jps
+
+  - name: "Checking Hadoop Cluster Report"
+    command: hadoop dfsadmin -report
+    register: report
+  - debug:
+          var: report 

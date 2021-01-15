@@ -1,0 +1,57 @@
+- hosts: dockerhost
+  gather_facts: false
+  tasks:
+          
+  - name: Creating Yum Repository for Docker
+    yum_repository:
+     name: docker
+     description: Docker Repo
+     file: /etc/yum.repos.d/docker
+     baseurl: https://download.docker.com/linux/centos/7/x86_64/stable
+     gpgcheck: no
+     enabled: true
+
+  - name: Docker Package Installation
+    command: "yum install docker-ce --nobest -y"
+
+  - name: Install Software Python36
+    package: 
+     name: python3
+     state: present
+
+  - name: Install Docker Python Library
+    pip:
+     name: docker-py
+
+  - name: Creating WorkSpace
+    file:
+     path: /root/WS
+     state: directory
+
+  - name: Copying Content Into Managed Node
+    copy:
+     content: "Hello World!! Task 10 By Karan Agrawal"
+     dest: "/root/WS/index.html"
+    ignore_errors: yes
+
+  - name: Starting Docker Service
+    service:
+     name: docker
+     state: started
+
+  - name: Pull an Image
+    docker_image:
+     name: httpd
+     source: pull
+
+  - name: Creating Docker Container
+    docker_container:
+     name: webseveros1
+     image: httpd
+     state: started
+     detach: true
+     interactive: true
+     ports:
+     - "1234:80"
+     volumes:
+     - /root/WS:/usr/local/apache2/htdocs/
