@@ -1,0 +1,36 @@
+ - hosts: ws
+   tasks:
+      - name: "Installing HTTPD and PHP"
+        package:
+                name:
+                        - "httpd"
+                        - "php"
+                state: present
+
+      - name: "Writing Webpages"
+        copy:
+              dest: "/var/www/html/index.php"
+              content: "<pre>\n<h1>Task 12</h1>\n<h2>Done By Karan Agrawal</h2>\n <?php\n\nprint `/usr/sbin/ifconfig`\n\n?>\n</pre>"
+
+      - name: "Starting Services"
+        service:
+                name: "httpd"
+                state: restarted
+
+ - hosts: lb
+   vars:
+           port: "8080"
+   tasks: 
+      - name: "Installing HAProxy"
+        package:
+                name: "haproxy"
+                state: present
+
+      - name: "Configuring HAProxy"
+        template:
+                dest: "/etc/haproxy/haproxy.cfg"
+                src: "/haproxy.cfg.j2"
+      - name: "Starting HAProxy service on IP {{ ansible_facts['default_ipv4']['address'] }}:{{ port }}"
+        service:
+                name: "haproxy"
+                state: restarted
