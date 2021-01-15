@@ -1,0 +1,19 @@
+---
+# tasks file for httpd
+
+- name: "Installing HTTPD"
+  package:
+          name: "{{ software_name }}"
+          state: present
+
+- name: "Copying Web Pages"
+  template:
+          dest: "/var/www/html/index.html"
+          src: "/root/Ansible_Roles/httpd/templates/index.j2"
+  notify: "restart service"
+
+- name: "Starting Services"
+  service:
+          name: "{{ software_name  }}"
+          state: started
+           

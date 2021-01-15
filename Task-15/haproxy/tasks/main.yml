@@ -1,0 +1,18 @@
+---
+# tasks file for haproxy
+
+- name: "Installing HAProxy"
+  package:
+          name: "{{ software_name }}"
+          state: present
+
+- name: "Configuration"
+  template:
+          dest: "/etc/haproxy/haproxy.cfg"
+          src: "/root/Ansible_Roles/haproxy/templates/haproxy.j2"
+  notify: "restart services"
+
+- name: "Starting Services"
+  service:
+          name: "{{ software_name  }}"
+          state: started
