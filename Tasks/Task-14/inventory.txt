@@ -1,0 +1,2 @@
+[containers]
+172.17.0.2 ansible_user=root ansible_ssh_pass=redhat ansible_connection=ssh

@@ -1,0 +1,3 @@
+p_name: apache2
+s_name: apache2
+doc_root: /var/www/html/index.html
